@@ -1,29 +1,33 @@
 import xlrd
-import xlwt
-from cn.rookiex import *
+import os
+from cn.rookiex.domain.BanJi import *
+from cn.rookiex.wt import writeUtil
 
-class Student:
-    def __init__(self,name,chengji,paiming,nianjipaiming):
-        self.name = name
-        self.chengji = chengji
-        self.banjipaiming = paiming
-        self.nianjipaiming = nianjipaiming
 
-    def __init__(self, name, chengji):
-        self.name = name
-        self.chengji = chengji
+def getBanJiChengJi(path,type1):
+    FileNames = os.listdir(path)
+    banjis = []
+    for filename in  FileNames:
+        keyWords = filename.split('_')
+        className = keyWords[0]
+        testName = keyWords[1]
+        testNo = keyWords[2].split('.')[0]
+        banji  = getFenDuan(path,filename,1,str(className),str(testName),int(testNo))
+        banjis.append(banji)
+        # for keyWord in keyWords:
+    return banjis
 
-    def __set__(self, name):
-        self.name = name
+def getFenDuan(path: str, fileName: str, type1: int, className: str, testName: str, testNo: int):
+    FileNames = os.listdir(path)
+    print(FileNames[0])
+    print(fileName.split('_'))
 
-def getFenDuan(a):
-    print (a,"分析结果")
-    data = xlrd.open_workbook(a) # 打开xls文件
+    print (path+fileName,"分析结果")
+    data = xlrd.open_workbook(path+fileName) # 打开xls文件
     table = data.sheets()[0] # 打开第一张表
     nrows = table.nrows # 获取表的行数3
     pNum = 0
-    sum = 0
-    avg = 0
+    zongfen = 0
     manfen = 0
     up95 = 0
     up90 = 0
@@ -37,12 +41,7 @@ def getFenDuan(a):
     up0 = 0
     quekao = 0
     dict = {}
-    Chengji = [50]
-    ci = (1,2,3)
-    Chengji[0] =  ci
-    print(Chengji)
 
-    ncols = table.ncols
     for i in range(nrows): # 循环逐行打印
         chengji = table.row_values(i)[2]
         name = table.row_values(i)[1]
@@ -57,7 +56,7 @@ def getFenDuan(a):
             continue
         if (name != ''):
             dict[name] = chengji
-        sum = chengji + sum
+            zongfen = chengji + zongfen
         if(chengji == 100):
             manfen= manfen+1
         elif (100 > chengji >= 95):
@@ -80,51 +79,67 @@ def getFenDuan(a):
             up40 = up40 + 1
         else:
            up0=up0+1
-
         pNum=pNum+1
-    print ('参考总人数',pNum)
-    print ('缺考',quekao)
-    print ('总分',sum)
-    print ('平均分',sum/pNum)
-    print ('100分一共',manfen,'人','占比',manfen/pNum)
-    print ('95分以上一共',up95,'人','占比',up95/pNum)
-    print ('90分以上一共',up90,'人','占比',up90/pNum)
-    print ('80分以上一共',(up85 + up80),'人','占比',(up85 + up80)/pNum)
-    print ('60分以上一共',(up60+up65+up70+up75),'人','占比',(up60+up65+up70+up75)/pNum)
-    print ('60分以下一共',(up0+up40),'人','占比',(up0+up40)/pNum)
 
-    print(dict)
+    # print ('参考总人数',pNum)
+    # print ('缺考',quekao)
+    # print ('总分',zongfen)
+    # print ('平均分',zongfen/pNum)
+    # print ('100分一共',manfen,'人','占比',manfen/pNum)
+    # print ('95分以上一共',up95,'人','占比',up95/pNum)
+    # print ('90分以上一共',up90,'人','占比',up90/pNum)
+    # print ('80分以上一共',(up85 + up80),'人','占比',(up85 + up80)/pNum)
+    # print ('60分以上一共',(up60+up65+up70+up75),'人','占比',(up60+up65+up70+up75)/pNum)
+    # print ('60分以下一共',(up0+up40),'人','占比',(up0+up40)/pNum)
+
+
+    # print(dict)
     a = sorted(dict.items(), key=lambda item: item[1],reverse = True)
-    print(dict.__len__())
-    return a
+    # print(dict.__len__())
+
+    students = []
+
+    if(type1 == 1):
+        paiming = 1  # 排名方式1
+        fenshu1 = a[0][1]  # 第一名分数
+        for b in a:
+            c = b[1]
+            d = b[0]
+            if (c < fenshu1):
+                paiming += 1
+                fenshu1 = c
+
+            print(c, d, paiming, paiming)
+            student = Student(d, c, paiming, paiming)
+            students.append(student)
+            # print(students)
+            # student.__init__(d, c, paiming, paiming)
+            # print(student)
+            # print(c, d, paiming)
+    else:
+        paiming3 = 1
+        paiming2 = 0  # 排名方式2
+        fenshu2 = a[0][1]  # 第一名分数
+        for b in a:
+            c = b[1]
+            d = b[0]
+            paiming2 += 1
+            if (c < fenshu2):
+                paiming3 = paiming2
+                fenshu2 = c
+            # print(c, d, paiming3)
+            student = Student(d, c, paiming3,paiming3)
+            students.append(student)
+           # print(student)
+
+    assert isinstance(a, object)
+    banji = BanJi(className ,testName,testNo,pNum ,zongfen ,manfen,up95,up90,up85,up80,up75,up70,up65,up60,up40,up0,quekao,students)
+    print(banji)
+    return banji
 
 if __name__ == '__main__':
-    a = getFenDuan("D:\\PycharmProjects\\studyManagerForGZH\\cn\\rookiex\\excl\\1.4班16周考试.xlsx")
-    print (a)
-    s = Student(1,2)
+    a = getBanJiChengJi("..\\source\\",1)
 
-    paiming = 1 #排名方式1
-    fenshu1 = a[0][1]  #第一名分数
-    for b in a:
-        c = b[1]
-        d = b[0]
-        if (c < fenshu1):
-            paiming += 1
-            fenshu1 = c
-        print(c,d,paiming)
-
-    paiming3 = 1
-    paiming2 = 0 #排名方式2
-    fenshu = a[0][1]  #第一名分数
-    for b in a:
-        c = b[1]
-        d = b[0]
-        paiming2 += 1
-        if (c < fenshu):
-            paiming3 = paiming2
-            fenshu = c
-        print(c,d,paiming3)
-
-
+    writeUtil.write_excel(a)
 
 
